@@ -28,7 +28,8 @@ body { margin: 0; background: var(--bg); color: var(--text); }
 }
 
 .app-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-.header-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.header-actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.role-hint { width: 100%; color: var(--danger); font-weight: 600; }
 .container { display: grid; gap: 1rem; }
 .card { background: var(--surface); border-radius: 14px; padding: 1rem; box-shadow: 0 6px 20px rgba(0,0,0,.08); }
 .grid.two { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: .8rem; }

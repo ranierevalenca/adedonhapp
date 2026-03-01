@@ -28,7 +28,8 @@ const state = loadState() || {
   timerLeft: 300,
   timerRunning: false,
   answersLocked: false,
-  roundScored: false
+  roundScored: false,
+  isGuest: false
 };
 
 let intervalId;
@@ -53,6 +54,7 @@ function isValidPortugueseWord(category, value) {
 }
 
 function addPlayer() {
+  if (state.isGuest) return alert('Apenas o criador da partida pode adicionar jogadores.');
   const nameInput = el('player-name');
   const avatarInput = el('player-avatar');
   if (!nameInput || !avatarInput) return;
@@ -106,6 +108,7 @@ function drawLetter() {
 }
 
 function newRound() {
+  if (state.isGuest) return alert('Apenas o criador da partida pode iniciar nova rodada.');
   const draw = el('draw-animation');
   if (draw) draw.classList.remove('hidden');
 
@@ -124,6 +127,15 @@ function newRound() {
     startTimer();
     render();
   }, 1200);
+}
+
+function stopRound() {
+  if (!state.timerRunning) return;
+  state.timerRunning = false;
+  state.answersLocked = true;
+  lockInputs();
+  renderTimer();
+  saveState();
 }
 
 function startTimer() {
@@ -287,7 +299,9 @@ function encodeRoomState() {
     players: state.players,
     roundLimit: state.roundLimit,
     usedLetters: state.usedLetters,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    hostCreatedAt: Date.now(),
+    buildVersion: BUILD_VERSION
   };
   return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
 }
@@ -318,6 +332,7 @@ function applyRoomToken(token) {
     if (!Array.isArray(room.players) || room.players.length < 2) throw new Error('invalid room');
 
     state.players = room.players.slice(0, 10);
+    state.isGuest = true;
     state.roundLimit = Number(room.roundLimit) || 0;
     state.usedLetters = Array.isArray(room.usedLetters) ? room.usedLetters : [];
     state.ranking = Object.fromEntries(state.players.map((p) => [p.name, state.ranking[p.name] || { points: 0, wins: 0, rounds: 0 }]));
@@ -364,7 +379,10 @@ function shareWhatsApp() {
 
 function preloadRoomFromUrl() {
   const token = new URLSearchParams(location.search).get('room');
-  if (!token) return;
+  if (!token) {
+    state.isGuest = false;
+    return;
+  }
   applyRoomToken(token);
 }
 
@@ -419,6 +437,29 @@ async function registerServiceWorker() {
   }
 }
 
+function applyRolePermissions() {
+  const guestLockedIds = ['player-name', 'player-avatar', 'add-player', 'round-limit', 'round-unlimited', 'create-room'];
+  guestLockedIds.forEach((id) => {
+    const node = el(id);
+    if (!node) return;
+    node.disabled = state.isGuest;
+  });
+
+  const newRoundBtn = el('new-round');
+  if (newRoundBtn) newRoundBtn.disabled = state.isGuest;
+
+  const roleHint = el('room-role-hint');
+  if (roleHint) {
+    if (state.isGuest) {
+      roleHint.classList.remove('hidden');
+      roleHint.textContent = 'Modo convidado: apenas o criador inicia nova rodada.';
+    } else {
+      roleHint.classList.add('hidden');
+      roleHint.textContent = '';
+    }
+  }
+}
+
 function render() {
   document.documentElement.dataset.theme = state.theme;
   const playersList = el('players-list');
@@ -434,6 +475,7 @@ function render() {
   renderTimer();
   renderRanking();
   renderHistory();
+  applyRolePermissions();
   saveState();
 }
 
@@ -445,6 +487,7 @@ function bindClick(id, handler) {
 bindClick('add-player', addPlayer);
 bindClick('start-championship', startChampionship);
 bindClick('new-round', newRound);
+bindClick('stop-round', stopRound);
 bindClick('finish-round', scoreRound);
 bindClick('open-ranking', () => el('ranking-modal')?.showModal());
 bindClick('share-whatsapp', shareWhatsApp);

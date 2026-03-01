@@ -41,6 +41,8 @@ https://ranierevalenca.github.io/Adedonhapp/
 - Botão **Atualizar App** para limpar cache/service worker e carregar a versão mais nova
 - QR Code da partida para compartilhar o estado inicial e entrar em outros dispositivos
 - Botão **Compartilhar WhatsApp** para enviar link da partida
+- Permissões por link/QR: convidado não pode adicionar/editar jogadores e não pode iniciar nova rodada
+- Botão **Stop** disponível para todos os participantes da partida
 
 ## Rodar localmente
 
