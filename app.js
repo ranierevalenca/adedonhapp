@@ -19,6 +19,10 @@ const state = loadState() || {
 
 let intervalId;
 let deferredInstallPrompt = null;
+  answersLocked: false
+};
+
+let intervalId;
 const $ = (id) => document.getElementById(id);
 
 function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
@@ -29,6 +33,7 @@ function addPlayer() {
   const avatar = $('player-avatar').value.trim() || '🙂';
   if (!name || state.players.length >= 10) return;
   if (!state.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
+  if (state.players.length < 2 || !state.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
     state.players.push({ id: crypto.randomUUID(), name, avatar });
     state.ranking[name] ||= { points: 0, wins: 0, rounds: 0 };
   }
@@ -98,6 +103,9 @@ function buildAnswerRows() {
     const tr = document.createElement('tr');
     tr.dataset.player = player.name;
     tr.innerHTML = `<td>${player.avatar} ${player.name}</td>${categories.map((c) => `<td><input data-cat="${c}" ${state.answersLocked ? 'disabled' : ''}></td>`).join('')}<td class="score">0</td><td class="total">${total}</td>`;
+    const tr = document.createElement('tr');
+    tr.dataset.player = player.name;
+    tr.innerHTML = `<td>${player.avatar} ${player.name}</td>${categories.map((c) => `<td><input data-cat="${c}" ${state.answersLocked ? 'disabled' : ''}></td>`).join('')}<td class="score">0</td>`;
     body.appendChild(tr);
   });
 }
@@ -110,6 +118,7 @@ function scoreRound() {
   if (!state.currentLetter) return alert('Inicie uma rodada antes de pontuar.');
   if (state.roundScored) return alert('Esta rodada já foi pontuada.');
 
+function scoreRound() {
   const entries = [];
   [...$('answers-body').querySelectorAll('tr')].forEach((tr) => {
     const player = tr.dataset.player;
@@ -119,6 +128,9 @@ function scoreRound() {
       const valid = Boolean(value) && value.startsWith(state.currentLetter);
       entries.push({ player, cat, value, valid, input });
       input.classList.toggle('valid', valid);
+      const valid = value && value.startsWith(state.currentLetter);
+      entries.push({ player, cat, value, valid, input });
+      input.classList.toggle('valid', !!valid);
       input.classList.toggle('invalid', !valid);
     });
   });
@@ -139,6 +151,21 @@ function scoreRound() {
 
   const top = Math.max(...Object.values(roundScores));
   Object.entries(roundScores).forEach(([name, pts]) => {
+    if (e.valid) {
+      const key = `${e.cat}:${e.value}`;
+      grouped[key] = (grouped[key] || 0) + 1;
+    }
+  });
+
+  const scores = Object.fromEntries(state.players.map((p) => [p.name, 0]));
+  entries.forEach((e) => {
+    if (!e.valid) return;
+    const key = `${e.cat}:${e.value}`;
+    scores[e.player] += grouped[key] === 1 ? 10 : 5;
+  });
+
+  const top = Math.max(...Object.values(scores));
+  Object.entries(scores).forEach(([name, pts]) => {
     const rank = state.ranking[name] ||= { points: 0, wins: 0, rounds: 0 };
     rank.points += pts;
     rank.rounds += 1;
@@ -161,6 +188,14 @@ function scoreRound() {
   state.roundScored = true;
   lockInputs();
 
+    const row = [...$('answers-body').querySelectorAll('tr')].find((r) => r.dataset.player === name);
+    row.querySelector('.score').textContent = pts;
+  });
+
+  state.history.unshift({ round: state.totalRoundsPlayed, letter: state.currentLetter, scores, date: new Date().toLocaleString('pt-BR') });
+  state.timerRunning = false;
+  state.answersLocked = true;
+  $('answers-body').querySelectorAll('input').forEach((i) => i.disabled = true);
   maybeFinishChampionship();
   render();
 }
@@ -180,12 +215,14 @@ function renderRanking() {
   const medals = ['🥇', '🥈', '🥉'];
   $('ranking-content').innerHTML = rankingSorted().map(([name, r], i) =>
     `<div class="podium">${medals[i] || '🏅'} <strong>${name}</strong> — ${r.points} pts | vitórias: ${r.wins} | média: ${(r.points / Math.max(r.rounds, 1)).toFixed(1)}</div>`
+    `<div class="podium">${medals[i] || '🏅'} <strong>${name}</strong> — ${r.points} pts | vitórias: ${r.wins} | média: ${(r.points / Math.max(r.rounds,1)).toFixed(1)}</div>`
   ).join('') || '<p>Sem dados ainda.</p>';
 }
 
 function renderChampion() {
   const [name, rank] = rankingSorted()[0] || ['Ninguém', { points: 0 }];
   $('champion-content').innerHTML = `<h3>Campeão: ${name}</h3><p>Total: ${rank.points} pontos</p>${rankingSorted().slice(0, 3).map(([n, r], i) => `<p>${['🥇', '🥈', '🥉'][i]} ${n} - ${r.points}</p>`).join('')}`;
+  $('champion-content').innerHTML = `<h3>Campeão: ${name}</h3><p>Total: ${rank.points} pontos</p>${rankingSorted().slice(0,3).map(([n,r],i)=>`<p>${['🥇','🥈','🥉'][i]} ${n} - ${r.points}</p>`).join('')}`;
 }
 
 function renderTimer() {
@@ -240,6 +277,10 @@ async function registerServiceWorker() {
   }
 }
 
+  w.document.write(`<h1>Ranking - Adedonha Bribs Championship</h1>${rankingSorted().map(([n,r],i)=>`<p>${i+1}. ${n} - ${r.points} pontos</p>`).join('')}`);
+  w.print();
+}
+
 function render() {
   document.documentElement.dataset.theme = state.theme;
   $('players-list').innerHTML = state.players.map((p) => `<li>${p.avatar} ${p.name}</li>`).join('');
@@ -270,6 +311,9 @@ $('continue-rounds').onclick = () => {
   render();
 };
 $('install-app').onclick = installApp;
+$('toggle-theme').onclick = () => { state.theme = state.theme === 'light' ? 'dark' : 'light'; render(); };
+$('new-championship').onclick = resetChampionship;
+$('continue-rounds').onclick = () => { state.roundLimit = 0; $('champion-modal').close(); render(); };
 
 const exportBtn = document.createElement('button');
 exportBtn.className = 'btn ghost';
