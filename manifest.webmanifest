@@ -1,0 +1,17 @@
+{
+  "name": "Adedonha Bribs Championship",
+  "short_name": "Adedonha",
+  "description": "Competição oficial de criatividade.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#6a5acd",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
