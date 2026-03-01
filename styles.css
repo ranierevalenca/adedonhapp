@@ -26,6 +26,11 @@ label { display: grid; gap: .4rem; font-size: .95rem; }
 input, select, textarea { padding: .6rem; border-radius: 10px; border: 1px solid #cfd6e6; }
 textarea { min-height: 70px; resize: vertical; }
 .checkbox-row { align-content: end; display: flex; align-items: center; gap: .5rem; }
+.container { display: grid; gap: 1rem; }
+.card { background: var(--surface); border-radius: 14px; padding: 1rem; box-shadow: 0 6px 20px rgba(0,0,0,.08); }
+.grid.two { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: .8rem; }
+label { display: grid; gap: .4rem; font-size: .95rem; }
+input, select { padding: .6rem; border-radius: 10px; border: 1px solid #cfd6e6; }
 .btn { border: none; padding: .7rem 1rem; border-radius: 10px; cursor: pointer; font-weight: 600; }
 .btn.primary { background: var(--primary); color: #fff; }
 .btn.secondary { background: #22b8cf; color: #fff; }
@@ -57,4 +62,9 @@ td input { width: 100%; }
   .app-header { align-items: flex-start; }
   .header-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
   .btn { width: 100%; }
+@keyframes drop { from {transform: translateY(-4px)} to {transform: translateY(4px)} }
+@media (max-width: 640px) {
+  .app-header { align-items: flex-start; }
+  .header-actions { width: 100%; display: flex; gap: .5rem; }
+  .btn { flex: 1; }
 }

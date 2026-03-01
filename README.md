@@ -31,6 +31,8 @@ https://ranierevalenca.github.io/Adedonhapp/
 - Timer de 5 minutos com alerta no último minuto
 - Validação automática por letra
 - Validação básica por dicionário português embutido (evita palavras aleatórias)
+- Timer de 5 minutos com alerta no último minuto
+- Validação automática por letra
 - Pontuação automática (10 único, 5 repetido, 0 inválido/vazio)
 - Ranking acumulado (pontos, vitórias, média)
 - Histórico de rodadas
@@ -103,57 +105,3 @@ https://ranierevalenca.github.io/Adedonhapp/og-image.svg
 
 O QR Code compartilha um **snapshot da partida** (jogadores, limite de rodadas e letras usadas).
 Não há sincronização em tempo real entre dispositivos nesta versão sem backend.
-
-
-## Corrigir merge com conflito resolvido em "both" (guia rápido)
-
-Se você fez merge e marcou **both** por engano, use este fluxo:
-
-### Opção A — antes de concluir o merge
-
-```bash
-git status
-# para aceitar o que já estava na sua branch (current/ours)
-git checkout --ours app.js index.html styles.css README.md
-# para aceitar o que veio da outra branch (incoming/theirs)
-git checkout --theirs app.js index.html styles.css README.md
-
-# depois revise e marque como resolvido
-git add app.js index.html styles.css README.md
-git commit -m "Resolve conflitos escolhendo current/theirs corretamente"
-```
-
-### Opção B — merge já concluído e quebrado
-
-```bash
-# 1) encontre o commit anterior ao merge ruim
-git log --oneline --graph -n 15
-
-# 2) volte para o commit anterior (mantendo histórico limpo)
-git reset --hard <COMMIT_ANTES_DO_MERGE>
-
-# 3) refaça o merge
-git merge <NOME_DA_BRANCH>
-
-# 4) em cada arquivo conflitante, escolha a versão correta
-# current
-# git checkout --ours <arquivo>
-# incoming
-# git checkout --theirs <arquivo>
-
-# 5) finalize
-git add .
-git commit -m "Refaz merge e resolve conflitos corretamente"
-git push --force-with-lease
-```
-
-### Dica
-
-Depois de resolver, rode pelo menos:
-
-```bash
-node --check app.js
-python3 -m http.server 4173 --bind 0.0.0.0
-```
-
-E abra o app para validar layout/pontuação antes do merge final.

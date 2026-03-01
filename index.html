@@ -18,6 +18,8 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="apple-touch-icon" href="./favicon.svg" />
     <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="./favicon.svg" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -67,6 +69,16 @@
           <button id="join-room" class="btn ghost">Entrar na partida</button>
         </div>
 
+        <div class="grid two">
+          <label>Número de rodadas
+            <select id="round-limit">
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="15">15</option>
+              <option value="0">Ilimitado</option>
+            </select>
+          </label>
+        </div>
         <div class="actions">
           <button id="start-championship" class="btn primary">Iniciar Campeonato</button>
           <button id="reset-championship" class="btn danger">Reset de campeonato</button>
@@ -88,6 +100,7 @@
           <table id="answers-table">
             <thead>
               <tr>
+                <th>Jogador</th><th>Nome</th><th>Cidade</th><th>Animal</th><th>Objeto</th><th>Comida</th><th>Cor</th><th>Rodada</th><th>Total</th>
                 <th>Jogador</th><th>Nome</th><th>Cidade</th><th>Animal</th><th>Objeto</th><th>Comida</th><th>Cor</th><th>Pontos</th>
               </tr>
             </thead>

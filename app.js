@@ -32,6 +32,10 @@ const state = loadState() || {
 
 let intervalId;
 let deferredInstallPrompt = null;
+  answersLocked: false
+};
+
+let intervalId;
 const $ = (id) => document.getElementById(id);
 
 function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
@@ -55,6 +59,7 @@ function addPlayer() {
   const avatar = $('player-avatar').value.trim() || '🙂';
   if (!name || state.players.length >= 10) return;
   if (!state.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
+  if (state.players.length < 2 || !state.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
     state.players.push({ id: crypto.randomUUID(), name, avatar });
     state.ranking[name] ||= { points: 0, wins: 0, rounds: 0 };
   }
@@ -76,6 +81,9 @@ function updateRoundLimitFromInputs() {
 function startChampionship() {
   if (state.players.length < 2) return alert('Cadastre entre 2 e 10 jogadores.');
   updateRoundLimitFromInputs();
+function startChampionship() {
+  if (state.players.length < 2) return alert('Cadastre entre 2 e 10 jogadores.');
+  state.roundLimit = Number($('round-limit').value);
   $('setup-card').classList.add('hidden');
   $('game-card').classList.remove('hidden');
   $('history-card').classList.remove('hidden');
@@ -93,6 +101,10 @@ function drawLetter() {
   state.currentLetter = letter;
   state.usedLetters.push(letter);
   return true;
+  if (!pool.length) return alert('Todas as letras já foram usadas.');
+  const letter = pool[Math.floor(Math.random() * pool.length)];
+  state.currentLetter = letter;
+  state.usedLetters.push(letter);
 }
 
 function newRound() {
@@ -102,12 +114,14 @@ function newRound() {
     $('draw-animation').classList.add('hidden');
     if (!ok) return;
 
+    drawLetter();
     state.currentRound += 1;
     state.totalRoundsPlayed += 1;
     state.timerLeft = 300;
     state.answersLocked = false;
     state.timerRunning = true;
     state.roundScored = false;
+    $('draw-animation').classList.add('hidden');
     buildAnswerRows();
     startTimer();
     render();
@@ -136,6 +150,10 @@ function buildAnswerRows() {
   const body = $('answers-body');
   body.innerHTML = '';
   state.players.forEach((player) => {
+    const total = state.ranking[player.name]?.points || 0;
+    const tr = document.createElement('tr');
+    tr.dataset.player = player.name;
+    tr.innerHTML = `<td>${player.avatar} ${player.name}</td>${categories.map((c) => `<td><input data-cat="${c}" ${state.answersLocked ? 'disabled' : ''}></td>`).join('')}<td class="score">0</td><td class="total">${total}</td>`;
     const tr = document.createElement('tr');
     tr.dataset.player = player.name;
     tr.innerHTML = `<td>${player.avatar} ${player.name}</td>${categories.map((c) => `<td><input data-cat="${c}" ${state.answersLocked ? 'disabled' : ''}></td>`).join('')}<td class="score">0</td>`;
@@ -145,12 +163,14 @@ function buildAnswerRows() {
 
 function lockInputs() {
   $('answers-body').querySelectorAll('input').forEach((i) => { i.disabled = true; });
+  $('answers-body').querySelectorAll('input').forEach((i) => i.disabled = true);
 }
 
 function scoreRound() {
   if (!state.currentLetter) return alert('Inicie uma rodada antes de pontuar.');
   if (state.roundScored) return alert('Esta rodada já foi pontuada.');
 
+function scoreRound() {
   const entries = [];
   [...$('answers-body').querySelectorAll('tr')].forEach((tr) => {
     const player = tr.dataset.player;
@@ -166,6 +186,14 @@ function scoreRound() {
       input.classList.toggle('valid', valid);
       input.classList.toggle('invalid', !valid);
       input.title = valid ? 'Resposta válida' : 'Inválido: precisa existir em português e iniciar com a letra da rodada.';
+      const value = input.value.trim().toUpperCase();
+      const valid = Boolean(value) && value.startsWith(state.currentLetter);
+      entries.push({ player, cat, value, valid, input });
+      input.classList.toggle('valid', valid);
+      const valid = value && value.startsWith(state.currentLetter);
+      entries.push({ player, cat, value, valid, input });
+      input.classList.toggle('valid', !!valid);
+      input.classList.toggle('invalid', !valid);
     });
   });
 
@@ -173,6 +201,9 @@ function scoreRound() {
   entries.forEach((entry) => {
     if (!entry.valid) return;
     const key = `${entry.cat}:${entry.normalized}`;
+  entries.forEach((e) => {
+    if (!e.valid) return;
+    const key = `${e.cat}:${e.value}`;
     grouped[key] = (grouped[key] || 0) + 1;
   });
 
@@ -181,10 +212,29 @@ function scoreRound() {
     if (!entry.valid) return;
     const key = `${entry.cat}:${entry.normalized}`;
     roundScores[entry.player] += grouped[key] === 1 ? 10 : 5;
+  entries.forEach((e) => {
+    if (!e.valid) return;
+    const key = `${e.cat}:${e.value}`;
+    roundScores[e.player] += grouped[key] === 1 ? 10 : 5;
   });
 
   const top = Math.max(...Object.values(roundScores));
   Object.entries(roundScores).forEach(([name, pts]) => {
+    if (e.valid) {
+      const key = `${e.cat}:${e.value}`;
+      grouped[key] = (grouped[key] || 0) + 1;
+    }
+  });
+
+  const scores = Object.fromEntries(state.players.map((p) => [p.name, 0]));
+  entries.forEach((e) => {
+    if (!e.valid) return;
+    const key = `${e.cat}:${e.value}`;
+    scores[e.player] += grouped[key] === 1 ? 10 : 5;
+  });
+
+  const top = Math.max(...Object.values(scores));
+  Object.entries(scores).forEach(([name, pts]) => {
     const rank = state.ranking[name] ||= { points: 0, wins: 0, rounds: 0 };
     rank.points += pts;
     rank.rounds += 1;
@@ -192,6 +242,7 @@ function scoreRound() {
 
     const row = [...$('answers-body').querySelectorAll('tr')].find((r) => r.dataset.player === name);
     row.querySelector('.score').textContent = pts;
+    row.querySelector('.total').textContent = rank.points;
   });
 
   state.history.unshift({
@@ -205,6 +256,15 @@ function scoreRound() {
   state.answersLocked = true;
   state.roundScored = true;
   lockInputs();
+
+    const row = [...$('answers-body').querySelectorAll('tr')].find((r) => r.dataset.player === name);
+    row.querySelector('.score').textContent = pts;
+  });
+
+  state.history.unshift({ round: state.totalRoundsPlayed, letter: state.currentLetter, scores, date: new Date().toLocaleString('pt-BR') });
+  state.timerRunning = false;
+  state.answersLocked = true;
+  $('answers-body').querySelectorAll('input').forEach((i) => i.disabled = true);
   maybeFinishChampionship();
   render();
 }
@@ -224,12 +284,14 @@ function renderRanking() {
   const medals = ['🥇', '🥈', '🥉'];
   $('ranking-content').innerHTML = rankingSorted().map(([name, r], i) =>
     `<div class="podium">${medals[i] || '🏅'} <strong>${name}</strong> — ${r.points} pts | vitórias: ${r.wins} | média: ${(r.points / Math.max(r.rounds, 1)).toFixed(1)}</div>`
+    `<div class="podium">${medals[i] || '🏅'} <strong>${name}</strong> — ${r.points} pts | vitórias: ${r.wins} | média: ${(r.points / Math.max(r.rounds,1)).toFixed(1)}</div>`
   ).join('') || '<p>Sem dados ainda.</p>';
 }
 
 function renderChampion() {
   const [name, rank] = rankingSorted()[0] || ['Ninguém', { points: 0 }];
   $('champion-content').innerHTML = `<h3>Campeão: ${name}</h3><p>Total: ${rank.points} pontos</p>${rankingSorted().slice(0, 3).map(([n, r], i) => `<p>${['🥇', '🥈', '🥉'][i]} ${n} - ${r.points}</p>`).join('')}`;
+  $('champion-content').innerHTML = `<h3>Campeão: ${name}</h3><p>Total: ${rank.points} pontos</p>${rankingSorted().slice(0,3).map(([n,r],i)=>`<p>${['🥇','🥈','🥉'][i]} ${n} - ${r.points}</p>`).join('')}`;
 }
 
 function renderTimer() {
@@ -348,6 +410,14 @@ async function registerServiceWorker() {
   }
 }
 
+    // ignore
+  }
+}
+
+  w.document.write(`<h1>Ranking - Adedonha Bribs Championship</h1>${rankingSorted().map(([n,r],i)=>`<p>${i+1}. ${n} - ${r.points} pontos</p>`).join('')}`);
+  w.print();
+}
+
 function render() {
   document.documentElement.dataset.theme = state.theme;
   $('players-list').innerHTML = state.players.map((p) => `<li>${p.avatar} ${p.name}</li>`).join('');
@@ -385,6 +455,9 @@ $('close-room-modal').onclick = () => $('room-modal').close();
 $('round-unlimited').addEventListener('change', () => {
   $('round-limit').disabled = $('round-unlimited').checked;
 });
+$('toggle-theme').onclick = () => { state.theme = state.theme === 'light' ? 'dark' : 'light'; render(); };
+$('new-championship').onclick = resetChampionship;
+$('continue-rounds').onclick = () => { state.roundLimit = 0; $('champion-modal').close(); render(); };
 
 const exportBtn = document.createElement('button');
 exportBtn.className = 'btn ghost';
@@ -399,4 +472,6 @@ $('round-limit').disabled = $('round-unlimited').checked;
 registerServiceWorker();
 setupInstallPrompt();
 preloadRoomFromUrl();
+registerServiceWorker();
+setupInstallPrompt();
 render();
