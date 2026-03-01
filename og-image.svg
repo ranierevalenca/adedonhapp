@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Adedonha Bribs Championship Open Graph">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6a5acd"/>
+      <stop offset="100%" stop-color="#22b8cf"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#0f1220"/>
+  <rect x="40" y="40" width="1120" height="550" rx="28" fill="url(#g)"/>
+  <text x="90" y="240" fill="#fff" font-size="72" font-family="Inter, Arial, sans-serif" font-weight="700">Adedonha Bribs Championship</text>
+  <text x="90" y="305" fill="#e6f4ff" font-size="38" font-family="Inter, Arial, sans-serif">Competição oficial de criatividade.</text>
+  <text x="90" y="420" fill="#fff" font-size="120">🏆 🎮 🔤</text>
+</svg>
