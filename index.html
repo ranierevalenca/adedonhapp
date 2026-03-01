@@ -30,6 +30,7 @@
       </div>
       <div class="header-actions">
         <button id="install-app" class="btn secondary hidden">Instalar App</button>
+        <button id="create-room" class="btn secondary">Criar partida (QR)</button>
         <button id="toggle-theme" class="btn ghost">🌙/☀️ Tema</button>
         <button id="open-ranking" class="btn secondary">Ranking Geral</button>
       </div>
@@ -50,6 +51,24 @@
           <button id="add-player" class="btn">Adicionar jogador</button>
         </div>
         <ul id="players-list" class="player-list"></ul>
+
+        <div class="grid two">
+          <label>Número de rodadas (manual)
+            <input id="round-limit" type="number" min="1" step="1" value="5" />
+          </label>
+          <label class="checkbox-row">
+            <input id="round-unlimited" type="checkbox" />
+            Rodadas ilimitadas
+          </label>
+        </div>
+
+        <div class="join-card">
+          <label>Entrar em partida por link/QR
+            <input id="join-link" type="text" placeholder="Cole aqui o link recebido" />
+          </label>
+          <button id="join-room" class="btn ghost">Entrar na partida</button>
+        </div>
+
         <div class="grid two">
           <label>Número de rodadas
             <select id="round-limit">
@@ -103,6 +122,14 @@
       <h2>Ranking Geral</h2>
       <div id="ranking-content"></div>
       <button id="close-ranking" class="btn">Fechar</button>
+    </dialog>
+
+    <dialog id="room-modal">
+      <h2>QR Code da partida</h2>
+      <p>Escaneie o QR ou compartilhe o link para os jogadores entrarem na mesma partida (snapshot inicial).</p>
+      <img id="room-qr" alt="QR da partida" />
+      <textarea id="room-link" readonly></textarea>
+      <button id="close-room-modal" class="btn">Fechar</button>
     </dialog>
 
     <dialog id="champion-modal">

@@ -1,6 +1,19 @@
 const STORAGE_KEY = 'adedonha_championship_v1';
 const categories = ['nome', 'cidade', 'animal', 'objeto', 'comida', 'cor'];
 
+const portugueseDictionary = {
+  nome: ['amanda', 'ana', 'andre', 'augusto', 'bruna', 'bianca', 'beatriz', 'carla', 'caio', 'daniel', 'diego', 'eduarda', 'felipe', 'gabriela', 'joao', 'julia', 'lara', 'lucas', 'marcos', 'maria', 'natalia', 'otavio', 'paulo', 'rafael', 'samuel', 'thiago', 'vinicius'],
+  cidade: ['aracaju', 'bauru', 'campinas', 'curitiba', 'belem', 'brasilia', 'fortaleza', 'goiania', 'manaus', 'natal', 'osasco', 'palmas', 'recife', 'salvador', 'santos', 'teresina', 'uberlandia', 'vitoria'],
+  animal: ['abelha', 'anta', 'arara', 'baleia', 'boi', 'burro', 'cachorro', 'camelo', 'coelho', 'coruja', 'elefante', 'foca', 'gato', 'girafa', 'jacare', 'lagarto', 'lobo', 'macaco', 'onca', 'ovelha', 'pato', 'porco', 'raposa', 'sapo', 'tigre', 'urso', 'vaca', 'zebra'],
+  objeto: ['agulha', 'anel', 'bola', 'boné', 'cadeira', 'caneta', 'copo', 'escova', 'faca', 'filtro', 'garrafa', 'janela', 'lampada', 'livro', 'mesa', 'mochila', 'oculos', 'pente', 'quadro', 'relogio', 'sapato', 'tesoura', 'vassoura'],
+  comida: ['abacate', 'arroz', 'batata', 'bolo', 'brigadeiro', 'cuscuz', 'feijao', 'frango', 'hamburguer', 'iogurte', 'lasanha', 'macarrao', 'manga', 'omelete', 'panqueca', 'pizza', 'queijo', 'risoto', 'salada', 'sopa', 'tapioca', 'uva'],
+  cor: ['amarelo', 'anil', 'azul', 'bege', 'branco', 'bronze', 'cinza', 'ciano', 'creme', 'dourado', 'escarlate', 'lilas', 'laranja', 'marrom', 'preto', 'prata', 'roxo', 'rosa', 'verde', 'vermelho', 'violeta']
+};
+
+const normalizedDictionary = Object.fromEntries(
+  Object.entries(portugueseDictionary).map(([cat, words]) => [cat, new Set(words.map(normalizeWord))])
+);
+
 const state = loadState() || {
   theme: 'light',
   players: [],
@@ -28,6 +41,19 @@ const $ = (id) => document.getElementById(id);
 function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 function loadState() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; } }
 
+function normalizeWord(value) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z]/g, '');
+}
+
+function isValidPortugueseWord(category, value) {
+  const normalized = normalizeWord(value);
+  return normalizedDictionary[category]?.has(normalized) || false;
+}
+
 function addPlayer() {
   const name = $('player-name').value.trim();
   const avatar = $('player-avatar').value.trim() || '🙂';
@@ -42,6 +68,19 @@ function addPlayer() {
   render();
 }
 
+function updateRoundLimitFromInputs() {
+  const unlimited = $('round-unlimited').checked;
+  if (unlimited) {
+    state.roundLimit = 0;
+    return;
+  }
+  const manual = Number($('round-limit').value);
+  state.roundLimit = Number.isFinite(manual) && manual > 0 ? manual : 5;
+}
+
+function startChampionship() {
+  if (state.players.length < 2) return alert('Cadastre entre 2 e 10 jogadores.');
+  updateRoundLimitFromInputs();
 function startChampionship() {
   if (state.players.length < 2) return alert('Cadastre entre 2 e 10 jogadores.');
   state.roundLimit = Number($('round-limit').value);
@@ -54,6 +93,14 @@ function startChampionship() {
 function drawLetter() {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   const pool = alphabet.filter((l) => !state.usedLetters.includes(l));
+  if (!pool.length) {
+    alert('Todas as letras já foram usadas.');
+    return false;
+  }
+  const letter = pool[Math.floor(Math.random() * pool.length)];
+  state.currentLetter = letter;
+  state.usedLetters.push(letter);
+  return true;
   if (!pool.length) return alert('Todas as letras já foram usadas.');
   const letter = pool[Math.floor(Math.random() * pool.length)];
   state.currentLetter = letter;
@@ -63,6 +110,10 @@ function drawLetter() {
 function newRound() {
   $('draw-animation').classList.remove('hidden');
   setTimeout(() => {
+    const ok = drawLetter();
+    $('draw-animation').classList.add('hidden');
+    if (!ok) return;
+
     drawLetter();
     state.currentRound += 1;
     state.totalRoundsPlayed += 1;
@@ -111,6 +162,7 @@ function buildAnswerRows() {
 }
 
 function lockInputs() {
+  $('answers-body').querySelectorAll('input').forEach((i) => { i.disabled = true; });
   $('answers-body').querySelectorAll('input').forEach((i) => i.disabled = true);
 }
 
@@ -124,6 +176,16 @@ function scoreRound() {
     const player = tr.dataset.player;
     categories.forEach((cat) => {
       const input = tr.querySelector(`[data-cat="${cat}"]`);
+      const value = input.value.trim();
+      const normalized = normalizeWord(value);
+      const startsWithLetter = normalized.startsWith(state.currentLetter.toLowerCase());
+      const inDictionary = isValidPortugueseWord(cat, value);
+      const valid = Boolean(normalized) && startsWithLetter && inDictionary;
+
+      entries.push({ player, cat, value, normalized, valid, input });
+      input.classList.toggle('valid', valid);
+      input.classList.toggle('invalid', !valid);
+      input.title = valid ? 'Resposta válida' : 'Inválido: precisa existir em português e iniciar com a letra da rodada.';
       const value = input.value.trim().toUpperCase();
       const valid = Boolean(value) && value.startsWith(state.currentLetter);
       entries.push({ player, cat, value, valid, input });
@@ -136,6 +198,9 @@ function scoreRound() {
   });
 
   const grouped = {};
+  entries.forEach((entry) => {
+    if (!entry.valid) return;
+    const key = `${entry.cat}:${entry.normalized}`;
   entries.forEach((e) => {
     if (!e.valid) return;
     const key = `${e.cat}:${e.value}`;
@@ -143,6 +208,10 @@ function scoreRound() {
   });
 
   const roundScores = Object.fromEntries(state.players.map((p) => [p.name, 0]));
+  entries.forEach((entry) => {
+    if (!entry.valid) return;
+    const key = `${entry.cat}:${entry.normalized}`;
+    roundScores[entry.player] += grouped[key] === 1 ? 10 : 5;
   entries.forEach((e) => {
     if (!e.valid) return;
     const key = `${e.cat}:${e.value}`;
@@ -247,6 +316,70 @@ function exportRankingPdf() {
   w.print();
 }
 
+function encodeRoomState() {
+  const payload = {
+    players: state.players,
+    roundLimit: state.roundLimit,
+    usedLetters: state.usedLetters,
+    createdAt: Date.now()
+  };
+  return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+}
+
+function decodeRoomState(encoded) {
+  const decoded = decodeURIComponent(escape(atob(encoded)));
+  return JSON.parse(decoded);
+}
+
+function createRoomShare() {
+  if (state.players.length < 2) return alert('Cadastre ao menos 2 jogadores antes de gerar QR.');
+  updateRoundLimitFromInputs();
+
+  const token = encodeRoomState();
+  const link = `${location.origin}${location.pathname}?room=${encodeURIComponent(token)}`;
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(link)}`;
+
+  $('room-link').value = link;
+  $('room-qr').src = qrSrc;
+  $('room-modal').showModal();
+}
+
+function joinRoomFromInput() {
+  const raw = $('join-link').value.trim();
+  if (!raw) return;
+  try {
+    const url = new URL(raw);
+    const token = url.searchParams.get('room');
+    if (!token) throw new Error('missing room');
+    applyRoomToken(token);
+  } catch {
+    alert('Link inválido de partida.');
+  }
+}
+
+function applyRoomToken(token) {
+  try {
+    const room = decodeRoomState(token);
+    if (!Array.isArray(room.players) || room.players.length < 2) throw new Error('invalid room');
+    state.players = room.players.slice(0, 10);
+    state.roundLimit = Number(room.roundLimit) || 0;
+    state.usedLetters = Array.isArray(room.usedLetters) ? room.usedLetters : [];
+    state.ranking = Object.fromEntries(state.players.map((p) => [p.name, state.ranking[p.name] || { points: 0, wins: 0, rounds: 0 }]));
+    $('round-limit').value = state.roundLimit > 0 ? state.roundLimit : 5;
+    $('round-unlimited').checked = state.roundLimit === 0;
+    render();
+    alert('Partida carregada! Agora clique em Iniciar Campeonato.');
+  } catch {
+    alert('Não foi possível carregar a partida a partir desse QR/link.');
+  }
+}
+
+function preloadRoomFromUrl() {
+  const token = new URLSearchParams(location.search).get('room');
+  if (!token) return;
+  applyRoomToken(token);
+}
+
 async function installApp() {
   if (!deferredInstallPrompt) return;
   deferredInstallPrompt.prompt();
@@ -273,6 +406,10 @@ async function registerServiceWorker() {
   try {
     await navigator.serviceWorker.register('./sw.js');
   } catch {
+    // ignore registration error
+  }
+}
+
     // ignore
   }
 }
@@ -311,6 +448,13 @@ $('continue-rounds').onclick = () => {
   render();
 };
 $('install-app').onclick = installApp;
+$('create-room').onclick = createRoomShare;
+$('join-room').onclick = joinRoomFromInput;
+$('close-room-modal').onclick = () => $('room-modal').close();
+
+$('round-unlimited').addEventListener('change', () => {
+  $('round-limit').disabled = $('round-unlimited').checked;
+});
 $('toggle-theme').onclick = () => { state.theme = state.theme === 'light' ? 'dark' : 'light'; render(); };
 $('new-championship').onclick = resetChampionship;
 $('continue-rounds').onclick = () => { state.roundLimit = 0; $('champion-modal').close(); render(); };
@@ -322,6 +466,12 @@ exportBtn.onclick = exportRankingPdf;
 $('setup-card').querySelector('.actions').appendChild(exportBtn);
 
 if (state.currentLetter && state.players.length) buildAnswerRows();
+$('round-limit').value = state.roundLimit > 0 ? state.roundLimit : 5;
+$('round-unlimited').checked = state.roundLimit === 0;
+$('round-limit').disabled = $('round-unlimited').checked;
+registerServiceWorker();
+setupInstallPrompt();
+preloadRoomFromUrl();
 registerServiceWorker();
 setupInstallPrompt();
 render();

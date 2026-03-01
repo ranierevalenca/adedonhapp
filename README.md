@@ -27,6 +27,10 @@ https://ranierevalenca.github.io/Adedonhapp/
 
 - Cadastro de jogadores (2 a 10)
 - Rodadas com sorteio de letra sem repetição
+- Definição manual do número de rodadas (ou ilimitado)
+- Timer de 5 minutos com alerta no último minuto
+- Validação automática por letra
+- Validação básica por dicionário português embutido (evita palavras aleatórias)
 - Timer de 5 minutos com alerta no último minuto
 - Validação automática por letra
 - Pontuação automática (10 único, 5 repetido, 0 inválido/vazio)
@@ -36,6 +40,7 @@ https://ranierevalenca.github.io/Adedonhapp/
 - Persistência local com `localStorage`
 - Exportação de ranking para PDF (via impressão do navegador)
 - Botão **Instalar App** (PWA) para criar atalho no celular
+- QR Code da partida para compartilhar o estado inicial e entrar em outros dispositivos
 
 ## Rodar localmente
 
@@ -94,3 +99,9 @@ Após publicar, para preview mais consistente no WhatsApp, prefira usar URL abso
 ```txt
 https://ranierevalenca.github.io/Adedonhapp/og-image.svg
 ```
+
+
+## Sobre o QR Code
+
+O QR Code compartilha um **snapshot da partida** (jogadores, limite de rodadas e letras usadas).
+Não há sincronização em tempo real entre dispositivos nesta versão sem backend.

@@ -18,6 +18,14 @@ html[data-theme='dark'] {
 body { margin: 0; background: var(--bg); color: var(--text); }
 .app-header, .container { max-width: 1100px; margin: 0 auto; padding: 1rem; }
 .app-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.header-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.container { display: grid; gap: 1rem; }
+.card { background: var(--surface); border-radius: 14px; padding: 1rem; box-shadow: 0 6px 20px rgba(0,0,0,.08); }
+.grid.two { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: .8rem; }
+label { display: grid; gap: .4rem; font-size: .95rem; }
+input, select, textarea { padding: .6rem; border-radius: 10px; border: 1px solid #cfd6e6; }
+textarea { min-height: 70px; resize: vertical; }
+.checkbox-row { align-content: end; display: flex; align-items: center; gap: .5rem; }
 .container { display: grid; gap: 1rem; }
 .card { background: var(--surface); border-radius: 14px; padding: 1rem; box-shadow: 0 6px 20px rgba(0,0,0,.08); }
 .grid.two { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: .8rem; }
@@ -29,6 +37,7 @@ input, select { padding: .6rem; border-radius: 10px; border: 1px solid #cfd6e6; 
 .btn.danger { background: var(--danger); color: #fff; }
 .btn.ghost { background: transparent; border: 1px solid #cfd6e6; color: var(--text); }
 .actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .8rem; }
+.join-card { margin-top: .8rem; display: grid; gap: .5rem; }
 .player-list { list-style: none; padding: 0; margin: .8rem 0; display: grid; gap: .3rem; }
 .player-list li { background: rgba(106,90,205,.12); padding: .4rem .6rem; border-radius: 8px; }
 .round-top { display: flex; gap: .8rem; align-items: center; flex-wrap: wrap; }
@@ -47,6 +56,12 @@ td input { width: 100%; }
 #ranking-content .podium { font-size: 1.1rem; margin: .5rem 0; }
 #history-list { margin: 0; padding-left: 1rem; }
 #confetti { font-size: 1.4rem; animation: drop 1s infinite alternate; }
+#room-qr { width: 280px; max-width: 100%; display: block; margin: .8rem auto; border-radius: 10px; }
+@keyframes drop { from {transform: translateY(-4px)} to {transform: translateY(4px)} }
+@media (max-width: 640px) {
+  .app-header { align-items: flex-start; }
+  .header-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+  .btn { width: 100%; }
 @keyframes drop { from {transform: translateY(-4px)} to {transform: translateY(4px)} }
 @media (max-width: 640px) {
   .app-header { align-items: flex-start; }
