@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adedonha Bribs Championship</title>
+    <meta name="description" content="Webapp moderno para jogar Adedonha em modo campeonato com ranking geral." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Adedonha Bribs Championship" />
+    <meta property="og:description" content="Competição oficial de criatividade. Cadastre jogadores, jogue rodadas e acompanhe o ranking." />
+    <meta property="og:image" content="https://ranierevalenca.github.io/Adedonhapp/og-image.svg" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Adedonha Bribs Championship" />
+    <meta name="twitter:description" content="Webapp para campeonato de Adedonha com ranking geral." />
+    <meta name="twitter:image" content="https://ranierevalenca.github.io/Adedonhapp/og-image.svg" />
+    <meta name="theme-color" content="#6a5acd" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="./favicon.svg" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css?v=20260302" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>Adedonha Bribs Championship</h1>
+        <p>Competição oficial de criatividade.</p>
+      </div>
+      <div class="header-actions">
+        <small id="room-role-hint" class="role-hint hidden"></small>
+        <button id="install-app" class="btn secondary hidden">Instalar App</button>
+        <button id="create-room" class="btn secondary">Criar partida (QR)</button>
+        <button id="toggle-theme" class="btn ghost">🌙/☀️ Tema</button>
+        <button id="open-ranking" class="btn secondary">Ranking Geral</button>
+        <button id="share-whatsapp" class="btn secondary">Compartilhar WhatsApp</button>
+        <button id="force-refresh" class="btn ghost">Atualizar App</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <section id="setup-card" class="card">
+        <h2>Cadastro de Jogadores</h2>
+        <div class="grid two">
+          <label>Nome
+            <input id="player-name" type="text" placeholder="Ex: Ana" maxlength="20" />
+          </label>
+          <label>Avatar (emoji ou cor)
+            <input id="player-avatar" type="text" placeholder="😀 ou #6a5acd" maxlength="10" />
+          </label>
+        </div>
+        <div class="actions">
+          <button id="add-player" class="btn">Adicionar jogador</button>
+        </div>
+        <ul id="players-list" class="player-list"></ul>
+
+        <div class="grid two">
+          <label>Número de rodadas (manual)
+            <input id="round-limit" type="number" min="1" step="1" value="5" />
+          </label>
+          <label class="checkbox-row">
+            <input id="round-unlimited" type="checkbox" />
+            Rodadas ilimitadas
+          </label>
+        </div>
+
+        <div class="join-card">
+          <label>Entrar em partida por link/QR
+            <input id="join-link" type="text" placeholder="Cole aqui o link recebido" />
+          </label>
+          <button id="join-room" class="btn ghost">Entrar na partida</button>
+          <div id="guest-player-wrap" class="hidden">
+            <label>Escolha seu nome na partida
+              <select id="guest-player-select"></select>
+            </label>
+            <button id="confirm-guest-player" class="btn secondary">Confirmar nome</button>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="start-championship" class="btn primary">Iniciar Campeonato</button>
+          <button id="reset-championship" class="btn danger">Reset de campeonato</button>
+        </div>
+      </section>
+
+      <section id="game-card" class="card hidden">
+        <div class="round-top">
+          <h2>Rodada <span id="round-counter">1</span></h2>
+          <div id="timer" class="timer">05:00</div>
+          <button id="new-round" class="btn primary">Nova Rodada</button>
+          <button id="stop-round" class="btn danger">Stop</button>
+        </div>
+
+        <div id="draw-animation" class="draw-animation hidden">Sorteando letra...</div>
+        <div id="letter-display" class="letter-display">-</div>
+        <small>Letras usadas: <span id="used-letters">nenhuma</span></small>
+
+        <div class="table-wrapper">
+          <table id="answers-table">
+            <thead>
+              <tr>
+                <th>Jogador</th><th>Nome</th><th>Cidade</th><th>Animal</th><th>Objeto</th><th>Comida</th><th>Cor</th><th>Pontos</th>
+              </tr>
+            </thead>
+            <tbody id="answers-body"></tbody>
+          </table>
+        </div>
+        <div class="actions">
+          <button id="finish-round" class="btn secondary">Finalizar Rodada e Pontuar</button>
+        </div>
+      </section>
+
+      <section id="history-card" class="card hidden">
+        <h2>Histórico do Campeonato</h2>
+        <ul id="history-list"></ul>
+      </section>
+    </main>
+
+    <dialog id="ranking-modal">
+      <h2>Ranking Geral</h2>
+      <div id="ranking-content"></div>
+      <button id="close-ranking" class="btn">Fechar</button>
+    </dialog>
+
+    <dialog id="room-modal">
+      <h2>QR Code da partida</h2>
+      <p>Escaneie o QR ou compartilhe o link para os jogadores entrarem na mesma partida (snapshot inicial).</p>
+      <img id="room-qr" alt="QR da partida" />
+      <textarea id="room-link" readonly></textarea>
+      <button id="close-room-modal" class="btn">Fechar</button>
+    </dialog>
+
+    <dialog id="champion-modal">
+      <h2>🏁 Fim do Campeonato</h2>
+      <div id="confetti">🎉 🎊 ✨ 🎉 🎊</div>
+      <div id="champion-content"></div>
+      <div class="actions">
+        <button id="new-championship" class="btn primary">Novo Campeonato</button>
+        <button id="continue-rounds" class="btn secondary">Continuar mais rodadas</button>
+      </div>
+    </dialog>
+
+    <footer class="app-footer">
+      <p>© 2026 Raniere Valença — Adedonha Bribs Championship.</p>
+      <small id="build-version">Build: 2026.03.02</small>
+    </footer>
+
+    <audio id="alert-sound" preload="auto">
+      <source src="data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YTAAAAAAAP//AAD//wAA//8AAP//AAD//wAA" type="audio/wav" />
+    </audio>
+
+    <script src="app.js?v=20260302"></script>
+  </body>
+</html>
